@@ -44,8 +44,8 @@ Configuration / Environment Variables
 -------------------------------------
 - `TOOL_REGISTRY_API_KEY` — required API key for protected endpoints.
 - `SUPPORTED_TOOLS_DIR` — directory path containing `.json` tool descriptor files.
-- `EXPOSE_PORT` — port for the HTTP server (default `2005`).
 - `APP_NAME` — optional application name.
+
 
 uv (astral-sh) package manager
 -------------------------------

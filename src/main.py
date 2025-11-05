@@ -88,15 +88,17 @@ app.add_middleware(
 )
 
 if __name__ == "__main__":
-    num_workers = max(1, os.cpu_count() or 1)
-    logging.info(f"=====Starting server with {num_workers} workers on port {EXPOSE_PORT} =====")
+    num_workers = app_settings.NUM_WORKERS
+    if not num_workers:
+        num_workers = max(1, os.cpu_count() or 1)
+        logging.info(f"=====Starting server with {num_workers} workers on port {EXPOSE_PORT} =====")
     print(f"Starting server with {num_workers} workers on port {EXPOSE_PORT}")
 
     uvicorn.run(
         "src.main:app",
         host="0.0.0.0",
         port=int(EXPOSE_PORT),
-        workers=1,
+        workers=num_workers,
         factory=False,
         reload=True,
     )
