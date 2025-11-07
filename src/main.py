@@ -1,10 +1,6 @@
 import logging
 import os
 import sys
-# Add the src directory to the Python path
-sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
-base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-os.environ["BASE_DIR"] = os.getenv("BASE_DIR", base_dir)
 
 from src.tool_registry.api import root, tools
 
@@ -22,8 +18,11 @@ from starlette import status
 from starlette.exceptions import HTTPException as StarletteHTTPException
 from starlette.middleware.cors import CORSMiddleware
 
-import os
 
+# Add the src directory to the Python path
+sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
+base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+os.environ["BASE_DIR"] = os.getenv("BASE_DIR", base_dir)
 
 APP_NAME = os.environ.get("APP_NAME", "Tool Registry")
 EXPOSE_PORT = os.environ.get("EXPOSE_PORT", 2005)
