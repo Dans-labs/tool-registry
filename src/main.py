@@ -87,18 +87,42 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+
 if __name__ == "__main__":
-    num_workers = app_settings.NUM_WORKERS
-    if not num_workers:
+    # read NUM_WORKERS safely, default to None when not present
+    raw_workers = getattr(app_settings, "NUM_WORKERS", None)
+
+    if raw_workers is None:
+        # auto-detect when not set
         num_workers = max(1, os.cpu_count() or 1)
         logging.info(f"=====Starting server with {num_workers} workers on port {EXPOSE_PORT} =====")
-    print(f"Starting server with {num_workers} workers on port {EXPOSE_PORT}")
+    else:
+        # coerce configured value to int, fallback to auto-detect on error
+        try:
+            num_workers = int(raw_workers)
+            if num_workers < 1:
+                raise ValueError("NUM_WORKERS must be >= 1")
+            logging.info(f"Starting server with configured NUM_WORKERS={num_workers} on port {EXPOSE_PORT}")
+        except (TypeError, ValueError):
+            logging.warning("NUM_WORKERS value invalid; falling back to auto-detect")
+            num_workers = max(1, os.cpu_count() or 1)
+
+    try:
+        port = int(EXPOSE_PORT)
+    except (TypeError, ValueError):
+        logging.warning("EXPOSE_PORT invalid; falling back to 2005")
+        port = 2005
+
+    # uvicorn reload is incompatible with multiple workers; disable reload when workers > 1
+    reload_flag = False if num_workers > 1 else True
+
+    print(f"Starting server with {num_workers} workers on port {port}")
 
     uvicorn.run(
         "src.main:app",
         host="0.0.0.0",
-        port=int(EXPOSE_PORT),
+        port=port,
         workers=num_workers,
         factory=False,
-        reload=True,
+        reload=reload_flag,
     )

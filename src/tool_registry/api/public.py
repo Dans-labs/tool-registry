@@ -2,8 +2,26 @@ from typing import Any, Optional, Iterator
 from fastapi import APIRouter, Request
 from pathlib import Path
 import json
+from dataclasses import dataclass
 
 router = APIRouter()
+
+
+# Small helper dataclass to produce the standardized tool summary dict
+@dataclass
+class ToolSummary:
+    key: str
+    value: str
+    props: dict
+
+    def to_dict(self) -> dict:
+        # Ensure props is a dict-like object
+        props = self.props or {}
+        return {
+            self.key: self.value,
+            "toolLabel": props.get("toolLabel", ""),
+            "toolDescription": props.get("toolDescription", "")
+        }
 
 
 # Returns a list of all supported tools (each item contains `toolURI`, `toolLabel`, `toolDescription`).
@@ -50,11 +68,8 @@ async def get_tools() -> list[Any]:
         tool_label = props.get("toolLabel") or ""
         tool_description = props.get("toolDescription") or ""
         if tool_uri:
-            tools.append({
-                "toolURI": tool_uri,
-                "toolLabel": tool_label,
-                "toolDescription": tool_description
-            })
+            # Use ToolSummary to keep the output format consistent
+            tools.append(ToolSummary("toolURI", tool_uri, props).to_dict())
     return tools
 
 
@@ -69,11 +84,7 @@ async def find_tool(match_type: str, match_value: str) -> dict:
         if match_type == "toolURI":
             if data.get("toolURI") == match_value:
                 props = data.get("toolProperties", {})
-                return {
-                    "toolURI": match_value,
-                    "toolLabel": props.get("toolLabel", ""),
-                    "toolDescription": props.get("toolDescription", "")
-                }
+                return ToolSummary("toolURI", match_value, props).to_dict()
 
         elif match_type == "typeURI":
             type_entries = data.get("typeURI", [])
@@ -81,13 +92,33 @@ async def find_tool(match_type: str, match_value: str) -> dict:
                 entry_val = entry.get("typeURI") if isinstance(entry, dict) else entry
                 if entry_val == match_value:
                     props = data.get("toolProperties", {})
-                    return {
-                        "typeURI": match_value,
-                        "toolLabel": props.get("toolLabel", ""),
-                        "toolDescription": props.get("toolDescription", "")
-                    }
+                    return ToolSummary("typeURI", match_value, props).to_dict()
 
     return {}
+
+
+    # New endpoint: find tools that accept a given input extension
+@router.get("/input/{ext}", description="List tools that accept the given input file extension (e.g. 'csv', 'tsv').")
+async def get_tools_by_input_extension(ext: str) -> list[Any]:
+    """Return a list of ToolSummary dicts for tools that declare an input with the provided extension.
+
+    The extension comparison is case-insensitive and a leading dot is ignored (so '.csv' and 'csv' are treated the same).
+    """
+    norm = (ext or "").lower().lstrip('.')
+    matches: list[Any] = []
+
+    for data in _iter_tool_data():
+        filetypes = data.get("fileTypes", {})
+        inputs = filetypes.get("input", []) if isinstance(filetypes, dict) else []
+        for item in inputs:
+            item_ext = (item.get("extension") or "").lower().lstrip('.') if isinstance(item, dict) else ""
+            if item_ext == norm:
+                tool_uri = data.get("toolURI")
+                props = data.get("toolProperties", {})
+                if tool_uri:
+                    matches.append(ToolSummary("toolURI", tool_uri, props).to_dict())
+                    break  # one match per tool is enough
+    return matches
 
 
 def _get_supported_tools_base() -> Path:
