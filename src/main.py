@@ -28,6 +28,7 @@ import os
 APP_NAME = os.environ.get("APP_NAME", "Tool Registry")
 EXPOSE_PORT = os.environ.get("EXPOSE_PORT", 2005)
 OTLP_GRPC_ENDPOINT = os.environ.get("OTLP_GRPC_ENDPOINT", "http://localhost:4317")
+API_PREFIX = os.environ.get("API_PREFIX", "/api/v1")
 
 
 app_settings = a_commons.app_settings
@@ -69,8 +70,8 @@ app = FastAPI(
     lifespan=lifespan
 )
 
-app.include_router(root.router, tags=["Public"], prefix="")
-app.include_router(public.router, tags=["Tools"], prefix="/tools")
+app.include_router(root.router, tags=["Public"], prefix=API_PREFIX)
+app.include_router(public.router, tags=["Tools"], prefix=f"{API_PREFIX}/tools")
 
 @app.exception_handler(StarletteHTTPException)
 async def custom_404_handler(request: Request, exc: StarletteHTTPException):
