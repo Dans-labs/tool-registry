@@ -70,6 +70,7 @@ async def search_tools(toolURI: Optional[str] = None, typeURI: Optional[str] = N
     if toolURI is None and typeURI is None and inputFileExt is None:
         return await get_tools()
 
+    # Case 2 — one or more query params: filter accordingly
     matches: list[Any] = []
 
     if toolURI:
@@ -120,6 +121,9 @@ async def get_tools_by_identifier(identifier: str):
     else:
         raise HTTPException(status_code=400, detail="Invalid identifier format")
 
+# POST endpoint to batch search for tools. 
+# Takes a JSON body with "toolURI" and/or "typeURI" arrays.
+# e.g. {"toolURI": ["edc:tool.443..."], "typeURI": ["edc:fil.0CC5..."]}
 @router.post("/search", description="Search for tools given a JSON body with 'toolURI' and/or 'typeURI'.")
 async def search_tools_post(payload: dict, bg: BackgroundTasks):
     job_id = str(uuid.uuid4())
