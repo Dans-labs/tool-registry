@@ -1,39 +1,14 @@
 import json
 import uuid
 import time
-import asyncio
 
 from typing import Any, Optional, Iterator
 from fastapi import APIRouter, Request, BackgroundTasks, HTTPException
 from pathlib import Path
-# from typing import Dict
 from dataclasses import dataclass
 from .jobs import JOB_STORE  # Reuse JOB_STORE from jobs.py
 
 router = APIRouter()
-
-# # In-memory job store for background tasks (if needed in future extensions)
-# # replace for production with a persistent store as needed
-# JOB_STORE: Dict[str, Dict] = {}
-
-# async def clean_db():
-#     """Cleans up old jobs from the JOB_STORE."""
-#     now = time.time()
-#     to_delete = []
-#     for job_id, job in JOB_STORE.items():
-#         if now - job["timestamp"] > 3600:  # 1 hour expiration
-#             to_delete.append(job_id)
-#     for job_id in to_delete:
-#         del JOB_STORE[job_id]
-#
-# async def periodic_housekeeping():
-#     while True:
-#         await clean_db()
-#         await asyncio.sleep(60)
-#
-# # Start the periodic housekeeping task
-# asyncio.get_running_loop().create_task(periodic_housekeeping())
-#
 
 # Small helper dataclass to produce the standardized tool summary dict
 @dataclass
