@@ -1,12 +1,8 @@
 import logging
 import os
 import sys
-# Add the src directory to the Python path
-sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
-base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-os.environ["BASE_DIR"] = os.getenv("BASE_DIR", base_dir)
 
-from src.tool_registry.api import root, public
+from src.tool_registry.api import root, tools, jobs
 
 from akmi_utils.commons import build_date
 from akmi_utils import commons as a_commons
@@ -22,12 +18,16 @@ from starlette import status
 from starlette.exceptions import HTTPException as StarletteHTTPException
 from starlette.middleware.cors import CORSMiddleware
 
-import os
 
+# Add the src directory to the Python path
+sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
+base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+os.environ["BASE_DIR"] = os.getenv("BASE_DIR", base_dir)
 
 APP_NAME = os.environ.get("APP_NAME", "Tool Registry")
 EXPOSE_PORT = os.environ.get("EXPOSE_PORT", 2005)
 OTLP_GRPC_ENDPOINT = os.environ.get("OTLP_GRPC_ENDPOINT", "http://localhost:4317")
+API_PREFIX = os.environ.get("API_PREFIX", "/api/v1")
 
 
 app_settings = a_commons.app_settings
@@ -69,13 +69,14 @@ app = FastAPI(
     lifespan=lifespan
 )
 
-app.include_router(root.router, tags=["Public"], prefix="")
-app.include_router(public.router, tags=["Tools"], prefix="/tools")
+app.include_router(root.router, tags=["Public"], prefix=API_PREFIX)
+app.include_router(tools.router, tags=["Tools"], prefix=f"{API_PREFIX}/tools")
+app.include_router(jobs.router, tags=["Jobs"], prefix=f"{API_PREFIX}/jobs")
 
 @app.exception_handler(StarletteHTTPException)
 async def custom_404_handler(request: Request, exc: StarletteHTTPException):
-    if exc.status_code == 404:
-        return JSONResponse(status_code=404, content={"message": "Endpoint not found"})
+    # if exc.status_code == 404:
+        # return JSONResponse(status_code=404, content={"message": "Endpoint not found"})
     return JSONResponse(status_code=exc.status_code, content={"message": exc.detail})
 
 
