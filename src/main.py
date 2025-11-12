@@ -59,7 +59,8 @@ print(project_details)
 
 @asynccontextmanager
 async def lifespan(application: FastAPI):
-    logging.info("start up")
+    logging.info("Starting up")
+    jobs.start_periodic_housekeeping()
     yield
 
 
@@ -73,6 +74,7 @@ app = FastAPI(
 app.include_router(root.router, tags=["Public"], prefix=API_PREFIX)
 app.include_router(tools.router, tags=["Tools"], prefix=f"{API_PREFIX}/tools")
 app.include_router(jobs.router, tags=["Jobs"], prefix=f"{API_PREFIX}/jobs")
+
 
 @app.exception_handler(StarletteHTTPException)
 async def custom_404_handler(request: Request, exc: StarletteHTTPException):
@@ -100,8 +102,6 @@ async def main():
     )
     server = uvicorn.Server(config)
 
-    # Start periodic housekeeping tasks
-    jobs.start_periodic_housekeeping()
     await server.serve()
 
 
