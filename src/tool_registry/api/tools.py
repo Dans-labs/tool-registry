@@ -49,7 +49,6 @@ class ToolOut(BaseModel):
     tags: Optional[list[str]]
 
     class Config:
-        orm_mode = True
         from_attributes = True
 
 
@@ -73,7 +72,8 @@ async def list_tools(
     query = select(GalaxyWorkflowArtifact)
     if search.name:
         logger.info(f"Searching for tools with name like: {search.name}")
-        query = query.where(GalaxyWorkflowArtifact.name.ilike(f"%{search.name}%"))
+        query = query.where(
+            GalaxyWorkflowArtifact.name.ilike(f"%{search.name}%"))
     if search.input_format:
         query = query.where(
             search.input_format == any_(GalaxyWorkflowArtifact.input_formats)
@@ -205,7 +205,8 @@ async def get_tools_by_identifier(identifier: str):
             raise HTTPException(status_code=404, detail="Tool not found")
         return results
     else:
-        raise HTTPException(status_code=400, detail="Invalid identifier format")
+        raise HTTPException(
+            status_code=400, detail="Invalid identifier format")
 
 
 # POST endpoint to batch search for tools.
@@ -285,7 +286,8 @@ def find_tool_sync(match_type: str, match_value: str) -> dict:
         elif match_type == "typeURI":
             type_entries = data.get("typeURI", [])
             for entry in type_entries:
-                entry_val = entry.get("typeURI") if isinstance(entry, dict) else entry
+                entry_val = entry.get("typeURI") if isinstance(
+                    entry, dict) else entry
                 if entry_val == match_value:
                     props = data.get("toolProperties", {})
                     return ToolSummary("typeURI", match_value, props).to_dict()
@@ -310,7 +312,8 @@ async def get_tools_by_input_extension(ext: str) -> list[Any]:
 
     for data in _iter_tool_data():
         filetypes = data.get("fileTypes", {})
-        inputs = filetypes.get("input", []) if isinstance(filetypes, dict) else []
+        inputs = filetypes.get("input", []) if isinstance(
+            filetypes, dict) else []
         for item in inputs:
             item_ext = (
                 (item.get("extension") or "").lower().lstrip(".")
@@ -321,7 +324,8 @@ async def get_tools_by_input_extension(ext: str) -> list[Any]:
                 tool_uri = data.get("toolURI")
                 props = data.get("toolProperties", {})
                 if tool_uri:
-                    matches.append(ToolSummary("toolURI", tool_uri, props).to_dict())
+                    matches.append(ToolSummary(
+                        "toolURI", tool_uri, props).to_dict())
                     break  # one match per tool is enough
     return matches
 

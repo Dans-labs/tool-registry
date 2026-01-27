@@ -1,8 +1,7 @@
 [logging]
-log_file = "@format {env[BASE_DIR]}/logs/tlr.log"
+log_file = "@format {env[BASE_DIR]}/logs/tool-registry.log"
 log_level = "DEBUG"
-use_detailed_format = true
-log_format = "%(asctime)s %(levelname)s %(name)s %(threadName)s : %(message)s"
+use_detailed_format = false
 
 [database]
 host = "localhost"
