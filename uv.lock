@@ -891,7 +891,7 @@ requires-dist = [
 [[package]]
 name = "toolmeta-harvester"
 version = "0.1.0.dev0"
-source = { git = "https://github.com/EOSC-Data-Commons/toolmeta-harvester.git?rev=main#2713cf03e9914b75b3d5c5efce1a7b8a1f2b07a5" }
+source = { git = "https://github.com/EOSC-Data-Commons/toolmeta-harvester.git?rev=main#f2694d6f8c6f7c7bd3f208537fe56eac72c4e7e4" }
 dependencies = [
     { name = "alembic" },
     { name = "lxml" },

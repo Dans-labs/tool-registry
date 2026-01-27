@@ -6,8 +6,8 @@ from fastapi import APIRouter, Depends, HTTPException
 from pathlib import Path
 from dataclasses import dataclass
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.future import select
-from sqlalchemy import or_, and_
+from sqlalchemy import select, exists, func, literal_column
+from sqlalchemy import any_
 from toolmeta_harvester.db.models import GalaxyWorkflowArtifact
 from tool_registry.db import get_db
 
@@ -35,11 +35,14 @@ class ToolSummary:
 
 
 class ToolOut(BaseModel):
-    id: str
+    id: int
+    uuid: str
     name: str
     description: Optional[str]
     url: str
     version: Optional[str]
+    input_formats: Optional[list[str]]
+    output_formats: Optional[list[str]]
     input_toolshed_tools: Optional[list[str]]
     output_toolshed_tools: Optional[list[str]]
     toolshed_tools: Optional[list[str]]
@@ -52,7 +55,9 @@ class ToolOut(BaseModel):
 
 class ToolSearchParams(BaseModel):
     name: Optional[str] = None
-    input_extension: Optional[str] = None
+    input_format: Optional[str] = None
+    output_format: Optional[str] = None
+    tag: Optional[str] = None
 
 
 @router.get(
@@ -69,13 +74,24 @@ async def list_tools(
     if search.name:
         logger.info(f"Searching for tools with name like: {search.name}")
         query = query.where(GalaxyWorkflowArtifact.name.ilike(f"%{search.name}%"))
-    if search.input_extension:
+    if search.input_format:
         query = query.where(
-            GalaxyWorkflowArtifact.input_toolshed_tools.any(
-                f"%{search.input_extension}%"
+            search.input_format == any_(GalaxyWorkflowArtifact.input_formats)
+        )
+    if search.output_format:
+        query = query.where(
+            search.output_format == any_(GalaxyWorkflowArtifact.output_formats)
+        )
+    if search.tag:
+        tag = literal_column("tag")
+        query = query.where(
+            exists(
+                select(1)
+                .select_from(func.unnest(GalaxyWorkflowArtifact.tags).alias("tag"))
+                .where(tag.ilike(f"%{search.tag}%"))
             )
         )
-    logger.info(f"Executing tool search with query: {query}")
+    logger.debug(f"Executing tool search with query: {query}")
     result = await db.execute(query)
     tools = result.scalars().all()
     logger.info(f"Found {len(tools)} tools matching search criteria.")
